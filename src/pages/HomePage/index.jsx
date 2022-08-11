@@ -1,18 +1,32 @@
 import { useEffect, useState } from "react"
 import request from "../../apis/request"
+import useDebounce from "../../hooks/useDebounce"
 import UserList from "./UserList"
 
 const HomePage = () => {
     const [value, setValue] = useState('')
     const [userList, setUserList] = useState([])
+    const debounceValue = useDebounce(value, 500)
     useEffect(() => {
-        const fetchUserList = async () => {
-            const response = await request.get(`/search/users?q=hung&page=1`)
-            const data = await response.data.items
-            setUserList(data)
+        if (debounceValue) {
+            fetchUserList(debounceValue).then((results) => {
+                setUserList(results)
+            })
+        } else {
+            setUserList([])
         }
-        fetchUserList()
-    }, [])
+    }, [debounceValue])
+
+    const fetchUserList = async (username) => {
+        try {
+            const response = await request.get(`/search/users?q=${username}&page=1`)
+            const data = await response.data.items
+            return data
+        } catch {
+            return []
+        }
+    } 
+
     return (
         <>
             <input 
